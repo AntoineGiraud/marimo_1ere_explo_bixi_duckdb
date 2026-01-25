@@ -10,7 +10,17 @@ Vous utiliserez **DuckDB** et son extension **spatial**.
 👉 Certaines cellules contiennent des `TODO` à compléter.
 
 
-### Installation
+### Usage immédiat via codespaces
+
+Lancez un codespace Github
+
+![capture_codespace_github](./capture_codespace_github.png)
+
+Une fois connecté, effectuez
+-  `uv sync` pour être sur d'avoir les dépendances python à jour
+-  `marimo edit .\marimo_1ere_explo_duckdb.py` pour lancer l'app Marimo & débuter le TD
+
+### Installation locale
 
 #### Récupérer les outils
 
