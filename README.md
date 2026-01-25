@@ -1,9 +1,9 @@
-# TD pour découvrir DuckDB avec l'aide de Marimo
+# TD découverte de DuckDB 🦆 avec Marimo & les données bixi 🚲
 
 Ce TD vous guide dans l’exploration de données réelles :
-- Stations Bixi (JSON)
-- Secteurs municipaux (GeoJSON)
-- Locations journalières (Parquet)
+- Statuts des **stations** bixi via le feed GBFS (JSON)
+- **Secteurs** municipaux de Montréal (GeoJSON)
+- **Locations** journalières des vélos (Parquet)
 
 Vous utiliserez **DuckDB** et son extension **spatial**.
 
