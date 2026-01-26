@@ -9,6 +9,7 @@ Vous utiliserez **DuckDB** et son extension **spatial**.
 
 👉 Certaines cellules contiennent des `TODO` à compléter.
 
+![capture_marimo_xp_dev](./capture_marimo_xp_dev.png)
 
 ### Usage immédiat via codespaces
 

@@ -83,7 +83,7 @@ def _(conn, mo, station_info_raw):
 
 
 @app.cell
-def _(conn, mo, station_info_raw, stations):
+def _(conn, mo, station_info_raw):
     station_info = mo.sql(
         f"""
         -- on va extraire des json les colonnes qui nous intéressent
@@ -100,7 +100,7 @@ def _(conn, mo, station_info_raw, stations):
         WHERE (station->>'lon')::DOUBLE != 0
         ORDER BY 1;
         -- affichons les résultats
-        from stations;
+        from station_info;
         """,
         engine=conn
     )
@@ -167,7 +167,7 @@ def join_intro(mo):
 
 
 @app.cell
-def _(conn, mo, sectors, stations):
+def _(conn, mo, sectors, station_info):
     sector_has_stations = mo.sql(
         f"""
         select
@@ -175,7 +175,7 @@ def _(conn, mo, sectors, stations):
         	42 as nb_station, --> 🧪 à compléter
         	404 as capacity, --> 🧪 à compléter
             any_value(ST_AsGeoJSON(sector_geom)) AS geom_json,
-        from stations
+        from station_info
           left join sectors
           	on ST_Within(station_geom, sector_geom)
         group by 1
