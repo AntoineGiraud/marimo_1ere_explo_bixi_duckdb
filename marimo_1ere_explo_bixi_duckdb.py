@@ -6,6 +6,7 @@
 
 import marimo
 
+
 __generated_with = "0.19.6"
 app = marimo.App(app_title="1ère explo DuckDB")
 
@@ -44,7 +45,7 @@ def imports():
     # Create a DuckDB connection
     conn = duckdb.connect("explo_bixi.db")
     # on va travailler avec des coordonnées
-    conn.sql('INSTALL spatial; LOAD spatial;')
+    conn.sql("INSTALL spatial; LOAD spatial;")
     return conn, mo
 
 
@@ -77,7 +78,7 @@ def _(conn, mo, station_info_raw):
         -- huuum super 1 ligne 1 station
         -- MAIS on va vouloir les avoir en colonnes !
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -102,7 +103,7 @@ def _(conn, mo, station_info_raw):
         -- affichons les résultats
         from station_info;
         """,
-        engine=conn
+        engine=conn,
     )
     return (station_info,)
 
@@ -151,7 +152,7 @@ def sectors_table(conn, mo):
         -- on les affiche de suite
         from sectors
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -181,7 +182,7 @@ def _(conn, mo, sectors, station_info):
         group by 1
         order by 1
         """,
-        engine=conn
+        engine=conn,
     )
     return (sector_has_stations,)
 
@@ -199,26 +200,28 @@ def viz_stations(mo, sector_has_stations, station_info):
     import json
     import folium
 
-
     # 1) Définir la carte
     m = folium.Map(
         location=[45.54, -73.6],
         zoom_start=12,
-        tiles="CartoDB Positron"   # fond clair, parfait pour superposer
+        tiles="CartoDB Positron",  # fond clair, parfait pour superposer
     )
 
     # 2) Ajouter les secteurs en fond
     for row in sector_has_stations.iter_rows(named=True):
         folium.GeoJson(
-            json.loads(row['geom_json']),
-            name=row['sector_name'],
-            popup=folium.Popup(f"{row['sector_name']}<ul><li>{row['nb_station']} stations</li><li>{row['capacity']} ancrages</li></ul>", max_width=200),
+            json.loads(row["geom_json"]),
+            name=row["sector_name"],
+            popup=folium.Popup(
+                f"{row['sector_name']}<ul><li>{row['nb_station']} stations</li><li>{row['capacity']} ancrages</li></ul>",
+                max_width=200,
+            ),
             style_function=lambda x: {
                 "fillColor": "#cccccc",
                 "color": "#555555",
                 "weight": 1,
-                "fillOpacity": 0.15,   # léger fond transparent
-            }
+                "fillOpacity": 0.15,  # léger fond transparent
+            },
         ).add_to(m)
 
     # 3) Palette de couleurs par capacité
@@ -227,19 +230,27 @@ def viz_stations(mo, sector_has_stations, station_info):
 
     def color_for_capacity(cap):
         for i in range(len(bins) - 1):
-            if bins[i] <= cap < bins[i+1]:
+            if bins[i] <= cap < bins[i + 1]:
                 return colors[i]
         return colors[-1]
 
     # 4) Ajouter les stations par-dessus
     # Ajouter les stations (en GeoJSON Point)
-    for row in station_info.iter_rows(named=True): 
-        folium.GeoJson( json.loads(row['geom_json']), popup=folium.Popup(f"{row['nom']}<ul><li>{row['capacity']} ancrages</li></ul>", max_width=200), marker=folium.CircleMarker( 
-            radius=6,
-            fill=True,
-            fill_color=color_for_capacity(row['capacity']),
-            fill_opacity=1.0,
-            weight=0) ).add_to(m)
+    for row in station_info.iter_rows(named=True):
+        folium.GeoJson(
+            json.loads(row["geom_json"]),
+            popup=folium.Popup(
+                f"{row['nom']}<ul><li>{row['capacity']} ancrages</li></ul>",
+                max_width=200,
+            ),
+            marker=folium.CircleMarker(
+                radius=6,
+                fill=True,
+                fill_color=color_for_capacity(row["capacity"]),
+                fill_opacity=1.0,
+                weight=0,
+            ),
+        ).add_to(m)
 
     # 7) Affichage
     mo.md("## 🗺️ Carte interactive — Secteurs + Stations")
@@ -280,7 +291,7 @@ def rentals_load(conn, mo):
         -- afficher les résultats
         from rentals_2020 where start_date='2020-04-27';
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -306,7 +317,7 @@ def _(conn, mo, rentals_2020):
         group by start_date_month
         order by 1
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -355,7 +366,7 @@ def _(conn, mo):
         -- qualify 1 = rg_un_1er_par_score
         order by score
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -377,7 +388,7 @@ app._unparsable_cell(
     group by start_date
     qualify ...
     """,
-    name="exo3_query"
+    name="exo3_query",
 )
 
 
@@ -406,7 +417,7 @@ def _(conn, mo):
         from rentals_daily limit 100
         """,
         output=False,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -423,7 +434,7 @@ def daily_load(conn, mo, rentals_daily):
         from rentals_daily
         group by all
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -454,7 +465,7 @@ def _(conn, mo, rentals_daily):
         where year(date)>=2022
         group by 1 order by 1;
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -477,7 +488,7 @@ def _(conn, mo, rentals_2020):
         copy rentals_2020 to 'data/rentals_2020.csv';
         copy rentals_2020 to 'data/rentals_2020.json';
         """,
-        engine=conn
+        engine=conn,
     )
     return
 
@@ -492,7 +503,7 @@ def _(conn, mo):
         FROM read_text('data/*')
         order by 2
         """,
-        engine=conn
+        engine=conn,
     )
     return
 

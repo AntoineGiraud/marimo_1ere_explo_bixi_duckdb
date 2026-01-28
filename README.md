@@ -50,4 +50,4 @@ Une fois connecté, effectuez
 
 #### Lancer le projet marimo
 
-- `marimo edit .\marimo_1ere_explo_duckdb.py`
+- `marimo edit .\marimo_1ere_explo_bixi_duckdb.py`
