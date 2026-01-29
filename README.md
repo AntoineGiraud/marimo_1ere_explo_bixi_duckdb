@@ -19,7 +19,7 @@ Lancez un codespace Github
 
 Une fois connecté, effectuez
 -  `uv sync` pour être sur d'avoir les dépendances python à jour
--  `marimo edit .\marimo_1ere_explo_duckdb.py` pour lancer l'app Marimo & débuter le TD
+-  `uv run marimo edit .\marimo_1ere_explo_bixi_duckdb.py` pour lancer l'app Marimo & débuter le TD
 
 ### Installation locale
 
@@ -46,6 +46,8 @@ Une fois connecté, effectuez
   - télécharge les dépendances / extensions python
 - `.venv/Scripts/activate.ps1` (unix `source .venv/bin/activate`)\
   activer l'env virtuel python dans le terminal
+    - si erreur d'"autorisation", powershell nous redirige vers une page d'où il suggère pour résoudre le pépin d'exécuter :\
+    `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 - `code .` ouvrir dans VS Code le répertoire courrant
 
 #### Lancer le projet marimo
