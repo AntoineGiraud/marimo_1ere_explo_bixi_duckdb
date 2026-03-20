@@ -6,8 +6,7 @@
 
 import marimo
 
-
-__generated_with = "0.19.6"
+__generated_with = "0.21.1"
 app = marimo.App(app_title="1ère explo DuckDB")
 
 
@@ -46,6 +45,7 @@ def imports():
     conn = duckdb.connect("explo_bixi.db")
     # on va travailler avec des coordonnées
     conn.sql("INSTALL spatial; LOAD spatial;")
+    print(duckdb.sql("select version();"))
     return conn, mo
 
 
@@ -70,9 +70,9 @@ def _(conn, mo, station_info_raw):
     _ = mo.sql(
         f"""
         -- on enregistre la table en mémoire
-        create or replace table station_info_raw as 
-        SELECT unnest("data".stations::json[]) AS station
-        FROM read_json_auto('https://gbfs.velobixi.com/gbfs/fr/station_information.json');
+        create or replace table station_info_raw as
+        select unnest("data".stations::json[]) AS station
+        from read_json_auto('https://gbfs.velobixi.com/gbfs/fr/station_information.json');
         -- affichons les résultats
         from station_info_raw;
         -- huuum super 1 ligne 1 station
@@ -88,8 +88,8 @@ def _(conn, mo, station_info_raw):
     station_info = mo.sql(
         f"""
         -- on va extraire des json les colonnes qui nous intéressent
-        create or replace table station_info as 
-        SELECT
+        create or replace table station_info as
+        select
             station->>'name' AS nom,
             (station->>'capacity')::INT AS capacity,
             ST_Point(
@@ -97,9 +97,9 @@ def _(conn, mo, station_info_raw):
                 (station->>'lat')::DOUBLE
             ) AS station_geom,
             ST_AsGeoJSON(station_geom) AS geom_json,
-        FROM station_info_raw
-        WHERE (station->>'lon')::DOUBLE != 0
-        ORDER BY 1;
+        from station_info_raw
+        where (station->>'lon')::DOUBLE != 0
+        order by 1;
         -- affichons les résultats
         from station_info;
         """,
@@ -131,24 +131,24 @@ def sectors_intro(mo):
 
 
 @app.cell
-def sectors_table(conn, mo):
+def sectors_table(conn, mo, t):
     sectors = mo.sql(
         f"""
-        CREATE TABLE if not exists sectors AS
-        WITH t AS (
-            SELECT unnest(features) AS feat
-            FROM read_json_auto(
+        create table if not exists sectors AS
+        with t AS (
+            select unnest(features) AS feat
+            from read_json_auto(
                 'https://www.donneesquebec.ca/recherche/dataset/b57cdeb1-98e7-4db7-bb84-32530f0367eb/resource/95ab084b-727e-4322-9433-0fed7baa690d/download/artm-sm-od13.geojson',
                 sample_size=-1
             )
         )
-        SELECT
+        select
             feat.properties.SM13::INT AS sector_id,
             feat.properties.SM13_nom AS sector_name,
-            ST_GeomFromGeoJSON(feat.geometry::json) AS sector_geom,
+            ST_GeomfromGeoJSON(feat.geometry::json) AS sector_geom,
             ST_AsText(sector_geom) AS geom_wkb,
             ST_Centroid(sector_geom) AS sector_centroid
-        FROM t;
+        from t;
         -- on les affiche de suite
         from sectors
         """,
@@ -178,7 +178,7 @@ def _(conn, mo, sectors, station_info):
             any_value(ST_AsGeoJSON(sector_geom)) AS geom_json,
         from station_info
           left join sectors
-          	on ST_Within(station_geom, sector_geom)
+          	on ST_within(station_geom, sector_geom)
         group by 1
         order by 1
         """,
@@ -286,8 +286,8 @@ def rentals_intro(mo):
 def rentals_load(conn, mo):
     _ = mo.sql(
         f"""
-        CREATE TABLE if not exists rentals_2020 AS
-        FROM 'hf://datasets/antoinegiraud/bixi_opendata/rentals_2020.parquet';
+        create table if not exists rentals_2020 AS
+        from 'hf://datasets/antoinegiraud/bixi_opendata/rentals_2020.parquet';
         -- afficher les résultats
         from rentals_2020 where start_date='2020-04-27';
         """,
@@ -313,9 +313,10 @@ def _(conn, mo, rentals_2020):
             count(1) nb_rentals,
             count(distinct start_date) nb_jours,
             --> hé oui, on n'était pas ouvert tous les mois de l'année
+            row_number() over(order by nb_rentals desc) as rang,
         from rentals_2020
-        group by start_date_month
-        order by 1
+        group by all
+        order by all
         """,
         engine=conn,
     )
@@ -386,7 +387,10 @@ app._unparsable_cell(
     select ...
     from rentals_2020
     group by start_date
-    qualify ...
+    qualify 🐘 ... ou limit 3 🐣 ? :)
+
+    -- oh, attention, penser à avoir le bon type de cellule marimo !
+    -- basculez vers le type sql (panneau ...)
     """,
     name="exo3_query",
 )
@@ -406,14 +410,14 @@ def daily_intro(mo):
 def _(conn, mo):
     _df = mo.sql(
         f"""
-        CREATE TABLE if not exists rentals_daily AS
-        SELECT
+        create table if not exists rentals_daily AS
+        select
             year,
             date,
             SUM(nb_rentals_starts) AS rentals
-        FROM 'hf://datasets/antoinegiraud/bixi_opendata/recap_stations_daily/**/*.parquet'
-        GROUP BY all;
-        -- afficher les données
+        from 'hf://datasets/antoinegiraud/bixi_opendata/recap_stations_daily/**/*.parquet'
+        group by all;
+        -- afficher qq données
         from rentals_daily limit 100
         """,
         output=False,
@@ -457,10 +461,10 @@ def _(conn, mo, rentals_daily):
         -- YearOverYear evolution
         select
             month(date) as mois,
-            1e6 rentals_2022, --> 🧪 à compléter
-            2e6 rentals_2023, --> 🧪 à compléter
-            3e6 rentals_2024, --> 🧪 à compléter
-            (rentals_2024 / nullif(rentals_2023, 0) * 100)::int -100 tx_23_24,
+            rentals_2022: 1e6 , --> 🧪 à compléter
+            rentals_2023: 2e6 , --> 🧪 à compléter
+            rentals_2024: 3e6, --> 🧪 à compléter
+            tx_23_24: (rentals_2024 / nullif(rentals_2023, 0) * 100)::int -100,
         from rentals_daily
         where year(date)>=2022
         group by 1 order by 1;
@@ -497,10 +501,10 @@ def _(conn, mo, rentals_2020):
 def _(conn, mo):
     _df = mo.sql(
         f"""
-        SELECT 
+        select
             filename,
             (size/1024/1024)::int AS size_mb,
-        FROM read_text('data/*')
+        from read_text('data/*')
         order by 2
         """,
         engine=conn,

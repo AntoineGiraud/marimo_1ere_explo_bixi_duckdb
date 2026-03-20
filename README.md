@@ -7,49 +7,71 @@ Ce TD vous guide dans l’exploration de données réelles :
 
 Vous utiliserez **DuckDB** et son extension **spatial**.
 
-👉 Certaines cellules contiennent des `TODO` à compléter.
+👉 Certaines cellules contiennent des `🧪 TODO` à compléter.
 
 ![capture_marimo_xp_dev](./capture_marimo_xp_dev.png)
 
-### Usage immédiat via codespaces
 
-Lancez un codespace Github
+## Installation locale & commandes
 
-![capture_codespace_github](./capture_codespace_github.png)
-
-Une fois connecté, effectuez
--  `uv sync` pour être sur d'avoir les dépendances python à jour
--  `uv run marimo edit .\marimo_1ere_explo_bixi_duckdb.py` pour lancer l'app Marimo & débuter le TD
-
-### Installation locale
-
-#### Récupérer les outils
+<details>
+<summary>Récupérer les outils <a href="https://git-scm.com/install/windows">git</a>, <a href="https://code.visualstudio.com/Download">VS Code</a> et <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a></summary>
 
 - [git](https://git-scm.com/install/windows) ou
-  `winget install --id Git.Git -e --source winget`
-  - Dire à **git** qui vous êtes
-    ```shell
-    git config --global user.name "PrenomNom"
-    git config --global user.email votresuper@email.fr
-    ```
+  `winget install --id Git.Git -e --source winget`\
+  Dire à **git** qui vous êtes
+  ```shell
+  git config --global user.name "PrenomNom"
+  git config --global user.email votresuper@email.fr
+  ```
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) ou
   `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
 - [VS Code](https://code.visualstudio.com/Download) ou [windows store](https://apps.microsoft.com/detail/xp9khm4bk9fz7q?hl=fr-FR&gl=FR)
 
-#### Clone & setup local du projet
+</details>
 
-- `git clone https://github.com/AntoineGiraud/marimo_1ere_explo_bixi_duckdb.git`
-- `cd marimo_1ere_explo_bixi_duckdb` <em style="color: grey">se déplacer dans le dossier récupéré avec git</em>
+<details>
+<summary>Rappel git clone</summary>
+
+```bash
+cd ~/votreDossierDeTravailPréféré
+
+# copie local du répo
+git clone https://github.com/AntoineGiraud/marimo_1ere_explo_bixi_duckdb.git
+
+# aller dans le dossier récupéré
+cd marimo_1ere_explo_bixi_duckdb
+```
+</details>
+
+<details>
+<summary>Astuces de développement (uv sync, venv)</summary>
+
 - `uv sync`
   - télécharge **python** <em style="color: grey">si non présent</em>
   - initialise un environnement virtuel python (venv) <em style="color: grey">si non présent</em>
   - télécharge les dépendances / extensions python
 - `.venv/Scripts/activate.ps1` (unix `source .venv/bin/activate`)\
-  activer l'env virtuel python dans le terminal
-    - si erreur d'"autorisation", powershell nous redirige vers une page d'où il suggère pour résoudre le pépin d'exécuter :\
+  Rend la commande **streamlit** disponible dans le terminal
+    - si erreur d'autorisation `PowerShell` :\
     `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-- `code .` ouvrir dans VS Code le répertoire courrant
 
-#### Lancer le projet marimo
+</details>
 
-- `marimo edit .\marimo_1ere_explo_bixi_duckdb.py`
+### Explorer DuckBD avec Marimo
+
+```bash
+# `uv run` optionel si venv activé !
+uv run marimo edit marimo_1ere_explo_bixi_duckdb.py
+```
+
+## Alternative sans installation via les codespaces
+
+Lancez un codespace Github
+
+![capture_codespace_github](./capture_codespace_github.png)
+
+Une fois connecté, lancez le notebook marimo & débuter le TD
+```
+uv run marimo edit marimo_1ere_explo_bixi_duckdb.py
+```
