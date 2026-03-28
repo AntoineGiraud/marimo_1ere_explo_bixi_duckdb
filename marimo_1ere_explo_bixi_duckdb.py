@@ -38,8 +38,8 @@ def intro(mo):
 
 @app.cell
 def imports():
+    import duckdb  # notre moteur de calcul
     import marimo as mo
-    import duckdb
 
     # Create a DuckDB connection
     conn = duckdb.connect("explo_bixi.db")
@@ -68,11 +68,11 @@ def stations_intro(mo):
 @app.cell
 def _(conn, mo, station_info_raw):
     _ = mo.sql(
-        f"""
+        """
         -- on enregistre la table en mémoire
         create or replace table station_info_raw as
         select unnest("data".stations::json[]) AS station
-        from read_json_auto('https://gbfs.velobixi.com/gbfs/fr/station_information.json');
+        from read_json('https://gbfs.velobixi.com/gbfs/fr/station_information.json');
         -- affichons les résultats
         from station_info_raw;
         -- huuum super 1 ligne 1 station
@@ -86,7 +86,7 @@ def _(conn, mo, station_info_raw):
 @app.cell
 def _(conn, mo, station_info_raw):
     station_info = mo.sql(
-        f"""
+        """
         -- on va extraire des json les colonnes qui nous intéressent
         create or replace table station_info as
         select
@@ -133,7 +133,7 @@ def sectors_intro(mo):
 @app.cell
 def sectors_table(conn, mo, t):
     sectors = mo.sql(
-        f"""
+        """
         create table if not exists sectors AS
         with t AS (
             select unnest(features) AS feat
@@ -170,7 +170,7 @@ def join_intro(mo):
 @app.cell
 def _(conn, mo, sectors, station_info):
     sector_has_stations = mo.sql(
-        f"""
+        """
         select
         	sector_name,
         	42 as nb_station, --> 🧪 à compléter
@@ -198,6 +198,7 @@ def _(mo):
 @app.cell
 def viz_stations(mo, sector_has_stations, station_info):
     import json
+
     import folium
 
     # 1) Définir la carte
@@ -285,7 +286,7 @@ def rentals_intro(mo):
 @app.cell
 def rentals_load(conn, mo):
     _ = mo.sql(
-        f"""
+        """
         create table if not exists rentals_2020 AS
         from 'hf://datasets/antoinegiraud/bixi_opendata/rentals_2020.parquet';
         -- afficher les résultats
@@ -307,7 +308,7 @@ def _(mo):
 @app.cell
 def _(conn, mo, rentals_2020):
     _df = mo.sql(
-        f"""
+        """
         select
             start_date_month as mois,
             count(1) nb_rentals,
@@ -326,11 +327,72 @@ def _(conn, mo, rentals_2020):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### Fonctions DuckDB pratiques
+
+    Pour creuser sur le profiling, direction la [doc](https://duckdb.org/docs/stable/dev/profiling) DuckDB<br>
+    OU un outil [DuckDB execution plan visualizer](https://db.cs.uni-tuebingen.de/explain/)
+    """)
+    return
+
+
+@app.cell
+def _(conn, mo, rentals_daily):
+    _df = mo.sql(
+        """
+        -- avoir la liste des colonnes + types de données
+        describe rentals_daily
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell
+def _(conn, mo, rentals_daily):
+    _df = mo.sql(
+        """
+        -- par colonne: min, max, moy, count, count distinct ....
+        summarize rentals_daily;
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell
+def _(conn, mo):
+    _df = mo.sql(
+        """
+        -- avoir le plan d'exécution prévu d'une requête
+        explain
+        summarize rentals_daily
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell
+def _(conn, mo):
+    _df = mo.sql(
+        """
+        -- avoir le plan d'exécution réalisé d'une requête avec le durées
+        explain analyse
+        summarize rentals_daily
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ### `row_number` vs `rank` vs `dense_rank`
 
     Petite apparté sur ces fonctions hautement importantes en ingénierie de données.
 
-    Elles très utilisées dans la déduplications de données, c'est à dire **retirer les doublons** (cf. [article d'Axel Thevenaut](https://medium.com/google-cloud/deduplication-in-bigquery-tables-a-comparative-study-of-7-approaches-f48966eeea2b))
+    Elles sont très utilisées dans la déduplication de données, c'est à dire **retirer les doublons** (cf. [article d'Axel Thevenaut](https://medium.com/google-cloud/deduplication-in-bigquery-tables-a-comparative-study-of-7-approaches-f48966eeea2b))
 
     On les réutilisera dans le TD hypermarché à venir.
 
@@ -344,7 +406,7 @@ def _(mo):
 @app.cell
 def _(conn, mo):
     _df = mo.sql(
-        f"""
+        """
         --------------------------------------------------------------------
         -- 🦆 DuckDB - Top player -> 🥇🥈🥉 row_number, rank & dense_rank
         --------------------------------------------------------------------
@@ -409,7 +471,32 @@ def daily_intro(mo):
 @app.cell
 def _(conn, mo):
     _df = mo.sql(
-        f"""
+        """
+        -- liste des fichiers sur ce repo hugging face
+        from glob('hf://datasets/antoinegiraud/bixi_opendata/recap_stations_daily/**/*.parquet')
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(conn, mo):
+    _df = mo.sql(
+        """
+        -- liste des fichiers + taille sur ce repo hugging face
+        select filename, round(size/1024, 2) as size_kb
+        from read_text('hf://datasets/antoinegiraud/bixi_opendata/recap_stations_daily/**/*.parquet')
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell
+def _(conn, mo):
+    _df = mo.sql(
+        """
         create table if not exists rentals_daily AS
         select
             year,
@@ -429,7 +516,7 @@ def _(conn, mo):
 @app.cell
 def daily_load(conn, mo, rentals_daily):
     _ = mo.sql(
-        f"""
+        """
         -- récap par année
         select
             year,
@@ -457,7 +544,7 @@ def exo4_intro(mo):
 @app.cell
 def _(conn, mo, rentals_daily):
     _df = mo.sql(
-        f"""
+        """
         -- YearOverYear evolution
         select
             month(date) as mois,
@@ -487,7 +574,7 @@ def _(mo):
 @app.cell
 def _(conn, mo, rentals_2020):
     _df = mo.sql(
-        f"""
+        """
         copy rentals_2020 to 'data/rentals_2020.parquet';
         copy rentals_2020 to 'data/rentals_2020.csv';
         copy rentals_2020 to 'data/rentals_2020.json';
@@ -500,12 +587,32 @@ def _(conn, mo, rentals_2020):
 @app.cell
 def _(conn, mo):
     _df = mo.sql(
-        f"""
+        """
         select
             filename,
             (size/1024/1024)::int AS size_mb,
         from read_text('data/*')
         order by 2
+        """,
+        engine=conn,
+    )
+    return
+
+
+@app.cell
+def _(conn, mo, rentals_2020):
+    _df = mo.sql(
+        """
+        -- astuce: on peut avoir l'alias de colonne au début
+        select
+            mois: start_date_month,
+            dt: start_date,
+            nb_rentals: count(1),
+            nb_jours: count(distinct start_date),
+            --> hé oui, on n'était pas ouvert tous les mois de l'année
+        from rentals_2020
+        group by 1, 2
+        qualify 1=row_number() over(partition by mois order by nb_rentals desc)
         """,
         engine=conn,
     )

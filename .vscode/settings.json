@@ -6,7 +6,13 @@
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features"
     },
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml"
+    },
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit"
+        },
     },
 }

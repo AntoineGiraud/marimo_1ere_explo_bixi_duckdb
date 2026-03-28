@@ -55,10 +55,13 @@ cd marimo_1ere_explo_bixi_duckdb
   Rend la commande **streamlit** disponible dans le terminal
     - si erreur d'autorisation `PowerShell` :\
     `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+- `ruff` : linter + formater python écrit en rust
+  - `ruff format` -> activé à chaque `ctrl+s` (cf. `.vscode/settings.json`)
+  - `ruff check fix` -> disponible via VS Code (`ctrl+maj+p` puis ruff fix)
 
 </details>
 
-### Explorer DuckBD avec Marimo
+### Explorer DuckDB avec Marimo
 
 ```bash
 # `uv run` optionel si venv activé !
