@@ -39,6 +39,7 @@ def intro(mo):
 @app.cell
 def imports():
     import duckdb  # notre moteur de calcul
+
     import marimo as mo
 
     # Create a DuckDB connection
@@ -437,7 +438,16 @@ def _(conn, mo):
 @app.cell(hide_code=True)
 def exo3_intro(mo):
     mo.md("""
-    ### 🧪 Exercice 3 — Top 3 journées de 2020
+    ### 🧪 Exercice 3.a. — Top 3 journées de 2020
+
+    keep it simple
+    """)
+    return
+
+@app.cell(hide_code=True)
+def exo3_intro(mo):
+    mo.md("""
+    ### 🧪 Exercice 3.b — Top journées par mois de 2020
 
     **Point d'attention** : quelle est la granularité de la table rentals_2020 ?
     """)
@@ -577,6 +587,7 @@ def _(conn, mo, rentals_2020):
         """
         copy rentals_2020 to 'data/rentals_2020.parquet';
         copy rentals_2020 to 'data/rentals_2020.csv';
+        copy rentals_2020 to 'data/rentals_2020.csv.gz';
         copy rentals_2020 to 'data/rentals_2020.json';
         """,
         engine=conn,
@@ -587,8 +598,13 @@ def _(conn, mo, rentals_2020):
 @app.cell
 def _(conn, mo):
     _df = mo.sql(
+<<<<<<< HEAD
         """
         select
+=======
+        f"""
+        SELECT
+>>>>>>> 8157fb9 (chore: tweak .vscode)
             filename,
             (size/1024/1024)::int AS size_mb,
         from read_text('data/*')
