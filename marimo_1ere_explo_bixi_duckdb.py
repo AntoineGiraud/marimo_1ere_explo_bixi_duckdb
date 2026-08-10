@@ -6,8 +6,8 @@
 
 import marimo
 
-__generated_with = "0.21.1"
-app = marimo.App(app_title="1ère explo DuckDB")
+__generated_with = "0.23.13"
+app = marimo.App(width="full", app_title="1ère explo DuckDB")
 
 
 @app.cell(hide_code=True)
@@ -42,9 +42,10 @@ def imports():
 
     import marimo as mo
 
-    # Create a DuckDB connection
     conn = duckdb.connect("explo_bixi.db")
     # on va travailler avec des coordonnées
+
+    # Create a DuckDB connection
     conn.sql("INSTALL spatial; LOAD spatial;")
     print(duckdb.sql("select version();"))
     return conn, mo
@@ -132,7 +133,7 @@ def sectors_intro(mo):
 
 
 @app.cell
-def sectors_table(conn, mo, t):
+def sectors_table(conn, mo):
     sectors = mo.sql(
         """
         create table if not exists sectors AS
@@ -155,7 +156,7 @@ def sectors_table(conn, mo, t):
         """,
         engine=conn,
     )
-    return
+    return (sectors,)
 
 
 @app.cell(hide_code=True)
@@ -196,7 +197,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def viz_stations(mo, sector_has_stations, station_info):
     import json
 
@@ -211,19 +212,22 @@ def viz_stations(mo, sector_has_stations, station_info):
 
     # 2) Ajouter les secteurs en fond
     for row in sector_has_stations.iter_rows(named=True):
+        if not row["geom_json"]:
+            continue
         folium.GeoJson(
             json.loads(row["geom_json"]),
             name=row["sector_name"],
-            popup=folium.Popup(
-                f"{row['sector_name']}<ul><li>{row['nb_station']} stations</li><li>{row['capacity']} ancrages</li></ul>",
-                max_width=200,
-            ),
             style_function=lambda x: {
                 "fillColor": "#cccccc",
                 "color": "#555555",
                 "weight": 1,
                 "fillOpacity": 0.15,  # léger fond transparent
             },
+        ).add_child(
+            folium.Popup(
+                f"{row['sector_name']}<ul><li>{row['nb_station']} stations</li><li>{row['capacity']} ancrages</li></ul>",
+                max_width=200,
+            )
         ).add_to(m)
 
     # 3) Palette de couleurs par capacité
@@ -237,20 +241,22 @@ def viz_stations(mo, sector_has_stations, station_info):
         return colors[-1]
 
     # 4) Ajouter les stations par-dessus
-    # Ajouter les stations (en GeoJSON Point)
+    # Ajouter les stations (en CircleMarker direct)
     for row in station_info.iter_rows(named=True):
-        folium.GeoJson(
-            json.loads(row["geom_json"]),
+        # On extrait les coordonnées du GeoJSON Point
+        geom = json.loads(row["geom_json"])
+        lon, lat = geom["coordinates"]
+
+        folium.CircleMarker(
+            location=[lat, lon],  # Folium attend [Lat, Lon]
+            radius=6,
+            fill=True,
+            fill_color=color_for_capacity(row["capacity"]),
+            fill_opacity=1.0,
+            weight=0,
             popup=folium.Popup(
                 f"{row['nom']}<ul><li>{row['capacity']} ancrages</li></ul>",
                 max_width=200,
-            ),
-            marker=folium.CircleMarker(
-                radius=6,
-                fill=True,
-                fill_color=color_for_capacity(row["capacity"]),
-                fill_opacity=1.0,
-                weight=0,
             ),
         ).add_to(m)
 
@@ -436,7 +442,7 @@ def _(conn, mo):
 
 
 @app.cell(hide_code=True)
-def exo3_intro(mo):
+def exo3a_intro(mo):
     mo.md("""
     ### 🧪 Exercice 3.a. — Top 3 journées de 2020
 
@@ -444,8 +450,9 @@ def exo3_intro(mo):
     """)
     return
 
+
 @app.cell(hide_code=True)
-def exo3_intro(mo):
+def exo3b_intro(mo):
     mo.md("""
     ### 🧪 Exercice 3.b — Top journées par mois de 2020
 
@@ -454,8 +461,9 @@ def exo3_intro(mo):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def exo3_daily_recap():
+    """
     select ...
     from rentals_2020
     group by start_date
@@ -463,9 +471,8 @@ app._unparsable_cell(
 
     -- oh, attention, penser à avoir le bon type de cellule marimo !
     -- basculez vers le type sql (panneau ...)
-    """,
-    name="exo3_query",
-)
+    """
+    return
 
 
 @app.cell(hide_code=True)
@@ -598,13 +605,8 @@ def _(conn, mo, rentals_2020):
 @app.cell
 def _(conn, mo):
     _df = mo.sql(
-<<<<<<< HEAD
         """
         select
-=======
-        f"""
-        SELECT
->>>>>>> 8157fb9 (chore: tweak .vscode)
             filename,
             (size/1024/1024)::int AS size_mb,
         from read_text('data/*')

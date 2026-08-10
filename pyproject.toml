@@ -9,14 +9,17 @@ authors = [
 requires-python = ">=3.13"
 
 dependencies = [
-    "marimo[sql]>=0.21.1",
+    "marimo[sql]>=0.23.16",
     "folium>=0.20.0",
-    "duckdb>=1.5.1",
+    "duckdb>=1.5.5",
     # "altair>=6.0.0",
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.15.8"]
+dev = [
+    "ruff>=0.15",
+    "ty>=0.0.69",
+]
 
 [tool.ruff.format]
 line-ending = "auto"
